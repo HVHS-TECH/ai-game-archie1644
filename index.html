@@ -6,55 +6,53 @@
 <title>Escape Tung Tung Tung Sahur</title>
 
 <style>
-body {
-    margin: 0;
-    overflow: hidden;
-    background: black;
-    font-family: Arial;
+body{
+    margin:0;
+    overflow:hidden;
+    background:black;
+    font-family:Arial;
 }
 
-canvas {
-    display: block;
+canvas{
+    display:block;
 }
 
-#menu {
-    position: absolute;
-    width: 100%;
-    top: 22%;
-    text-align: center;
-    color: white;
-    z-index: 10;
+#menu{
+    position:absolute;
+    width:100%;
+    top:25%;
+    text-align:center;
+    color:white;
+    z-index:10;
 }
 
-#menu h1 {
-    font-size: 60px;
-    margin-bottom: 10px;
+#menu h1{
+    font-size:60px;
 }
 
-#menu p {
-    font-size: 24px;
+#menu p{
+    font-size:24px;
 }
 
-button {
-    padding: 15px 40px;
-    font-size: 24px;
-    border: none;
-    border-radius: 10px;
-    background: red;
-    color: white;
-    cursor: pointer;
-    margin-top: 20px;
+button{
+    padding:15px 40px;
+    font-size:24px;
+    border:none;
+    border-radius:10px;
+    background:red;
+    color:white;
+    cursor:pointer;
 }
 
-#message {
-    position: absolute;
-    width: 100%;
-    top: 40%;
-    text-align: center;
-    color: white;
-    font-size: 60px;
-    display: none;
-    z-index: 20;
+#message{
+    position:absolute;
+    width:100%;
+    top:40%;
+    text-align:center;
+    color:white;
+    font-size:60px;
+    display:none;
+    z-index:20;
 }
 </style>
 </head>
@@ -65,7 +63,7 @@ button {
 
     <p>WASD to move</p>
     <p>Move mouse to look around</p>
-    <p>Escape the maze before Tung catches you</p>
+    <p>Find the green exit before Tung catches you</p>
 
     <button onclick="startGame()">START GAME</button>
 </div>
@@ -117,19 +115,19 @@ const maze = [
 ];
 
 const player = {
-    x: 96,
-    y: 96,
-    angle: 0,
-    speed: 2.8
+    x:96,
+    y:96,
+    angle:0,
+    speed:2.8
 };
 
 const tung = {
-    x: 1500,
-    y: 1400,
-    speed: 1.6
+    x:1500,
+    y:1400,
+    speed:1.6
 };
 
-function startGame() {
+function startGame(){
 
     started = true;
 
@@ -138,117 +136,116 @@ function startGame() {
     canvas.requestPointerLock();
 }
 
-document.addEventListener("keydown", e => {
+document.addEventListener("keydown",e=>{
     keys[e.key.toLowerCase()] = true;
 });
 
-document.addEventListener("keyup", e => {
+document.addEventListener("keyup",e=>{
     keys[e.key.toLowerCase()] = false;
 });
 
-document.addEventListener("mousemove", e => {
+document.addEventListener("mousemove",e=>{
 
-    if (
+    if(
         document.pointerLockElement === canvas &&
         started &&
         !gameOver
-    ) {
+    ){
         player.angle += e.movementX * 0.003;
     }
 });
 
-function wallAt(x, y) {
+function wallAt(x,y){
 
     const mapX = Math.floor(x / tileSize);
     const mapY = Math.floor(y / tileSize);
 
-    if (
+    if(
         mapY < 0 ||
         mapY >= maze.length ||
         mapX < 0 ||
         mapX >= maze[0].length
-    ) {
+    ){
         return true;
     }
 
     return maze[mapY][mapX] === "1";
 }
 
-function update() {
+function update(){
 
-    if (!started || gameOver) return;
+    if(!started || gameOver) return;
 
     let moveX = 0;
     let moveY = 0;
 
-    if (keys["w"]) {
+    if(keys["w"]){
         moveX += Math.cos(player.angle) * player.speed;
         moveY += Math.sin(player.angle) * player.speed;
     }
 
-    if (keys["s"]) {
+    if(keys["s"]){
         moveX -= Math.cos(player.angle) * player.speed;
         moveY -= Math.sin(player.angle) * player.speed;
     }
 
-    if (keys["a"]) {
+    if(keys["a"]){
         moveX += Math.cos(player.angle - Math.PI/2) * player.speed;
         moveY += Math.sin(player.angle - Math.PI/2) * player.speed;
     }
 
-    if (keys["d"]) {
+    if(keys["d"]){
         moveX += Math.cos(player.angle + Math.PI/2) * player.speed;
         moveY += Math.sin(player.angle + Math.PI/2) * player.speed;
     }
 
-    // player collision
-    if (!wallAt(player.x + moveX, player.y)) {
+    if(!wallAt(player.x + moveX, player.y)){
         player.x += moveX;
     }
 
-    if (!wallAt(player.x, player.y + moveY)) {
+    if(!wallAt(player.x, player.y + moveY)){
         player.y += moveY;
     }
 
-    // tung movement
+    // tung AI
     const dx = player.x - tung.x;
     const dy = player.y - tung.y;
 
-    const dist = Math.hypot(dx, dy);
+    const dist = Math.hypot(dx,dy);
 
     const mx = (dx / dist) * tung.speed;
     const my = (dy / dist) * tung.speed;
 
-    if (!wallAt(tung.x + mx, tung.y)) {
+    if(!wallAt(tung.x + mx, tung.y)){
         tung.x += mx;
     }
 
-    if (!wallAt(tung.x, tung.y + my)) {
+    if(!wallAt(tung.x, tung.y + my)){
         tung.y += my;
     }
 
-    if (dist < 40) {
+    if(dist < 40){
         loseGame();
     }
 
-    // exit check
+    // exit
     const mapX = Math.floor(player.x / tileSize);
     const mapY = Math.floor(player.y / tileSize);
 
-    if (maze[mapY][mapX] === "E") {
+    if(maze[mapY][mapX] === "E"){
         winGame();
     }
 }
 
-function castRays() {
+function castRays(){
 
-    for (let x = 0; x < canvas.width; x++) {
+    for(let x = 0; x < canvas.width; x++){
 
         const rayAngle =
             player.angle - 0.6 +
             (x / canvas.width) * 1.2;
 
-        for (let depth = 0; depth < 1200; depth++) {
+        for(let depth = 0; depth < 1200; depth++){
 
             const rayX =
                 player.x + Math.cos(rayAngle) * depth;
@@ -256,13 +253,13 @@ function castRays() {
             const rayY =
                 player.y + Math.sin(rayAngle) * depth;
 
-            if (wallAt(rayX, rayY)) {
+            if(wallAt(rayX,rayY)){
 
                 const wallHeight =
                     70000 / (depth + 1);
 
                 const shade =
-                    Math.max(40, 255 - depth / 4);
+                    Math.max(40,255 - depth / 4);
 
                 ctx.fillStyle =
                     `rgb(${shade},0,0)`;
@@ -280,48 +277,51 @@ function castRays() {
     }
 }
 
-function drawTung() {
+function drawTung(){
 
     const dx = tung.x - player.x;
     const dy = tung.y - player.y;
 
-    const distance = Math.hypot(dx, dy);
+    const distance = Math.hypot(dx,dy);
 
     const angle =
-        Math.atan2(dy, dx) - player.angle;
+        Math.atan2(dy,dx) - player.angle;
 
-    if (Math.abs(angle) < 0.6) {
+    if(Math.abs(angle) < 0.7){
 
-        const size = 5000 / distance;
+        const size = 7000 / distance;
 
         const screenX =
-            canvas.width/2 +
+            canvas.width / 2 +
             Math.tan(angle) * 700;
 
+        const screenY =
+            canvas.height / 2;
+
         // legs
-        ctx.strokeStyle = "#7a4a21";
-        ctx.lineWidth = size/8;
+        ctx.strokeStyle = "#8b5a2b";
+        ctx.lineWidth = size / 12;
 
         ctx.beginPath();
 
         ctx.moveTo(
-            screenX - size/6,
-            canvas.height/2 + size/2
+            screenX - size / 7,
+            screenY + size / 2
         );
 
         ctx.lineTo(
-            screenX - size/4,
-            canvas.height/2 + size
+            screenX - size / 4,
+            screenY + size
         );
 
         ctx.moveTo(
-            screenX + size/6,
-            canvas.height/2 + size/2
+            screenX + size / 7,
+            screenY + size / 2
         );
 
         ctx.lineTo(
-            screenX + size/4,
-            canvas.height/2 + size
+            screenX + size / 4,
+            screenY + size
         );
 
         ctx.stroke();
@@ -330,21 +330,21 @@ function drawTung() {
         ctx.fillStyle = "#9b5d2e";
 
         ctx.fillRect(
-            screenX - size/5,
-            canvas.height/2 - size/4,
-            size/2.5,
+            screenX - size / 5,
+            screenY - size / 4,
+            size / 2.5,
             size
         );
 
         // head
-        ctx.fillStyle = "#d18a4f";
+        ctx.fillStyle = "#d89a5b";
 
         ctx.beginPath();
 
         ctx.arc(
             screenX,
-            canvas.height/2 - size/2,
-            size/2.8,
+            screenY - size / 2,
+            size / 2.7,
             0,
             Math.PI * 2
         );
@@ -357,138 +357,107 @@ function drawTung() {
         ctx.beginPath();
 
         ctx.arc(
-            screenX - size/7,
-            canvas.height/2 - size/2,
-            size/11,
+            screenX - size / 6,
+            screenY - size / 2,
+            size / 8,
             0,
             Math.PI * 2
         );
 
         ctx.arc(
-            screenX + size/7,
-            canvas.height/2 - size/2,
-            size/11,
+            screenX + size / 6,
+            screenY - size / 2,
+            size / 8,
             0,
             Math.PI * 2
         );
 
         ctx.fill();
 
+        // pupils
         ctx.fillStyle = "black";
 
         ctx.beginPath();
 
         ctx.arc(
-            screenX - size/7,
-            canvas.height/2 - size/2,
-            size/25,
+            screenX - size / 6,
+            screenY - size / 2,
+            size / 18,
             0,
             Math.PI * 2
         );
 
         ctx.arc(
-            screenX + size/7,
-            canvas.height/2 - size/2,
-            size/25,
+            screenX + size / 6,
+            screenY - size / 2,
+            size / 18,
             0,
             Math.PI * 2
         );
 
         ctx.fill();
 
-        // mouth
+        // smile
         ctx.strokeStyle = "black";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
 
         ctx.beginPath();
 
         ctx.arc(
             screenX,
-            canvas.height/2 - size/2 + size/8,
-            size/10,
+            screenY - size / 2 + size / 7,
+            size / 8,
             0,
             Math.PI
+        );
+
+        ctx.stroke();
+
+        // arms
+        ctx.strokeStyle = "#8b5a2b";
+        ctx.lineWidth = size / 14;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX - size / 5,
+            screenY
+        );
+
+        ctx.lineTo(
+            screenX - size / 2,
+            screenY + size / 5
+        );
+
+        ctx.moveTo(
+            screenX + size / 5,
+            screenY
+        );
+
+        ctx.lineTo(
+            screenX + size / 2,
+            screenY + size / 5
         );
 
         ctx.stroke();
     }
 }
 
-function drawFrames() {
-
-    for (let y = 0; y < maze.length; y++) {
-
-        for (let x = 0; x < maze[y].length; x++) {
-
-            if (
-                maze[y][x] === "1" &&
-                (x + y) % 8 === 0
-            ) {
-
-                const fx = x * tileSize + 32;
-                const fy = y * tileSize + 32;
-
-                const dx = fx - player.x;
-                const dy = fy - player.y;
-
-                const distance = Math.hypot(dx, dy);
-
-                const angle =
-                    Math.atan2(dy, dx) - player.angle;
-
-                if (Math.abs(angle) < 0.5) {
-
-                    const size = 1000 / distance;
-
-                    const screenX =
-                        canvas.width/2 +
-                        Math.tan(angle) * 600;
-
-                    // frame
-                    ctx.fillStyle = "#5c3b16";
-
-                    ctx.fillRect(
-                        screenX - size/2,
-                        canvas.height/2 - size/2,
-                        size,
-                        size
-                    );
-
-                    // face
-                    ctx.fillStyle = "#d18a4f";
-
-                    ctx.beginPath();
-
-                    ctx.arc(
-                        screenX,
-                        canvas.height/2,
-                        size/3,
-                        0,
-                        Math.PI * 2
-                    );
-
-                    ctx.fill();
-                }
-            }
-        }
-    }
-}
-
-function drawMiniMap() {
+function drawMiniMap(){
 
     const scale = 6;
 
-    for (let y = 0; y < maze.length; y++) {
+    for(let y = 0; y < maze.length; y++){
 
-        for (let x = 0; x < maze[y].length; x++) {
+        for(let x = 0; x < maze[y].length; x++){
 
-            if (maze[y][x] === "1") {
+            if(maze[y][x] === "1"){
                 ctx.fillStyle = "white";
             }
-            else if (maze[y][x] === "E") {
+            else if(maze[y][x] === "E"){
                 ctx.fillStyle = "lime";
             }
-            else {
+            else{
                 ctx.fillStyle = "#222";
             }
 
@@ -522,7 +491,7 @@ function drawMiniMap() {
     );
 }
 
-function draw() {
+function draw(){
 
     // sky
     ctx.fillStyle = "#111";
@@ -542,11 +511,9 @@ function draw() {
         canvas.height/2
     );
 
-    if (started) {
+    if(started){
 
         castRays();
-
-        drawFrames();
 
         drawTung();
 
@@ -581,7 +548,7 @@ function draw() {
     }
 }
 
-function loseGame() {
+function loseGame(){
 
     gameOver = true;
 
@@ -595,7 +562,7 @@ function loseGame() {
         "TUNG TUNG TUNG SAHUR GOT YOU";
 }
 
-function winGame() {
+function winGame(){
 
     gameOver = true;
 
@@ -609,7 +576,7 @@ function winGame() {
         "YOU ESCAPED";
 }
 
-function gameLoop() {
+function gameLoop(){
 
     update();
     draw();
