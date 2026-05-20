@@ -63,7 +63,7 @@ button{
 
     <p>WASD to move</p>
     <p>Move mouse to look around</p>
-    <p>Find the green exit before Tung catches you</p>
+    <p>Escape the maze before Tung catches you</p>
 
     <button onclick="startGame()">START GAME</button>
 </div>
@@ -282,46 +282,47 @@ function drawTung(){
     const dx = tung.x - player.x;
     const dy = tung.y - player.y;
 
-    const distance = Math.hypot(dx,dy);
+    const distance = Math.hypot(dx, dy);
 
-    const angle =
-        Math.atan2(dy,dx) - player.angle;
+    let angle =
+        Math.atan2(dy, dx) - player.angle;
 
-    if(Math.abs(angle) < 0.7){
+    while(angle < -Math.PI) angle += Math.PI * 2;
+    while(angle > Math.PI) angle -= Math.PI * 2;
 
-        const size = 7000 / distance;
+    if(Math.abs(angle) < 1){
 
         const screenX =
             canvas.width / 2 +
-            Math.tan(angle) * 700;
+            Math.tan(angle) * 500;
 
-        const screenY =
-            canvas.height / 2;
+        const size =
+            Math.max(120, 9000 / distance);
 
         // legs
-        ctx.strokeStyle = "#8b5a2b";
-        ctx.lineWidth = size / 12;
+        ctx.strokeStyle = "#7a4a21";
+        ctx.lineWidth = size * 0.04;
 
         ctx.beginPath();
 
         ctx.moveTo(
-            screenX - size / 7,
-            screenY + size / 2
+            screenX - size * 0.08,
+            canvas.height/2 + size * 0.6
         );
 
         ctx.lineTo(
-            screenX - size / 4,
-            screenY + size
+            screenX - size * 0.15,
+            canvas.height/2 + size
         );
 
         ctx.moveTo(
-            screenX + size / 7,
-            screenY + size / 2
+            screenX + size * 0.08,
+            canvas.height/2 + size * 0.6
         );
 
         ctx.lineTo(
-            screenX + size / 4,
-            screenY + size
+            screenX + size * 0.15,
+            canvas.height/2 + size
         );
 
         ctx.stroke();
@@ -330,10 +331,10 @@ function drawTung(){
         ctx.fillStyle = "#9b5d2e";
 
         ctx.fillRect(
-            screenX - size / 5,
-            screenY - size / 4,
-            size / 2.5,
-            size
+            screenX - size * 0.15,
+            canvas.height/2 - size * 0.1,
+            size * 0.3,
+            size * 0.7
         );
 
         // head
@@ -343,8 +344,8 @@ function drawTung(){
 
         ctx.arc(
             screenX,
-            screenY - size / 2,
-            size / 2.7,
+            canvas.height/2 - size * 0.35,
+            size * 0.22,
             0,
             Math.PI * 2
         );
@@ -357,17 +358,17 @@ function drawTung(){
         ctx.beginPath();
 
         ctx.arc(
-            screenX - size / 6,
-            screenY - size / 2,
-            size / 8,
+            screenX - size * 0.08,
+            canvas.height/2 - size * 0.37,
+            size * 0.06,
             0,
             Math.PI * 2
         );
 
         ctx.arc(
-            screenX + size / 6,
-            screenY - size / 2,
-            size / 8,
+            screenX + size * 0.08,
+            canvas.height/2 - size * 0.37,
+            size * 0.06,
             0,
             Math.PI * 2
         );
@@ -380,17 +381,17 @@ function drawTung(){
         ctx.beginPath();
 
         ctx.arc(
-            screenX - size / 6,
-            screenY - size / 2,
-            size / 18,
+            screenX - size * 0.08,
+            canvas.height/2 - size * 0.37,
+            size * 0.02,
             0,
             Math.PI * 2
         );
 
         ctx.arc(
-            screenX + size / 6,
-            screenY - size / 2,
-            size / 18,
+            screenX + size * 0.08,
+            canvas.height/2 - size * 0.37,
+            size * 0.02,
             0,
             Math.PI * 2
         );
@@ -399,14 +400,14 @@ function drawTung(){
 
         // smile
         ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
 
         ctx.beginPath();
 
         ctx.arc(
             screenX,
-            screenY - size / 2 + size / 7,
-            size / 8,
+            canvas.height/2 - size * 0.3,
+            size * 0.06,
             0,
             Math.PI
         );
@@ -415,28 +416,28 @@ function drawTung(){
 
         // arms
         ctx.strokeStyle = "#8b5a2b";
-        ctx.lineWidth = size / 14;
+        ctx.lineWidth = size * 0.04;
 
         ctx.beginPath();
 
         ctx.moveTo(
-            screenX - size / 5,
-            screenY
+            screenX - size * 0.15,
+            canvas.height/2
         );
 
         ctx.lineTo(
-            screenX - size / 2,
-            screenY + size / 5
+            screenX - size * 0.35,
+            canvas.height/2 + size * 0.1
         );
 
         ctx.moveTo(
-            screenX + size / 5,
-            screenY
+            screenX + size * 0.15,
+            canvas.height/2
         );
 
         ctx.lineTo(
-            screenX + size / 2,
-            screenY + size / 5
+            screenX + size * 0.35,
+            canvas.height/2 + size * 0.1
         );
 
         ctx.stroke();
@@ -493,8 +494,8 @@ function drawMiniMap(){
 
 function draw(){
 
-    // sky
     ctx.fillStyle = "#111";
+
     ctx.fillRect(
         0,
         0,
@@ -502,8 +503,8 @@ function draw(){
         canvas.height/2
     );
 
-    // floor
     ctx.fillStyle = "#222";
+
     ctx.fillRect(
         0,
         canvas.height/2,
