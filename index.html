@@ -20,7 +20,7 @@ canvas {
 #menu {
     position: absolute;
     width: 100%;
-    top: 30%;
+    top: 28%;
     text-align: center;
     color: white;
 }
@@ -61,7 +61,7 @@ button {
 
     <p>WASD to move</p>
     <p>Hold Right Click to look around</p>
-    <p>Find the green exit before he catches you</p>
+    <p>Escape the maze before he catches you</p>
 
     <button onclick="startGame()">START</button>
 </div>
@@ -84,32 +84,44 @@ let keys = {};
 let looking = false;
 
 const maze = [
-"111111111111",
-"100000000001",
-"101111111101",
-"100000100001",
-"111110101101",
-"100010000001",
-"101011111101",
-"101000000001",
-"101111111101",
-"1000000000E1",
-"111111111111"
+"111111111111111111",
+"1000000000000000E1",
+"101111111111111101",
+"101000000000001101",
+"101011111111101101",
+"101010000001101101",
+"101010111101101101",
+"101010100001101101",
+"101010101111101101",
+"101000101000001101",
+"101111101011111101",
+"100000001000000001",
+"101111111111111101",
+"100000000000000001",
+"111111111111111111"
 ];
 
 const tileSize = 64;
 
 const player = {
-    x: 100,
-    y: 100,
+    x: 96,
+    y: 832,
     angle: 0
 };
 
 const monster = {
-    x: 500,
-    y: 500,
-    speed: 1.2
+    x: 850,
+    y: 120,
+    speed: 1.4
 };
+
+const frames = [
+    {x: 5 * tileSize, y: 1.5 * tileSize},
+    {x: 9 * tileSize, y: 3.5 * tileSize},
+    {x: 13 * tileSize, y: 5.5 * tileSize},
+    {x: 3 * tileSize, y: 9.5 * tileSize},
+    {x: 10 * tileSize, y: 11.5 * tileSize}
+];
 
 document.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
@@ -234,7 +246,7 @@ function castRays() {
         const rayAngle =
             player.angle - 0.5 + (x / canvas.width);
 
-        for (let depth = 0; depth < 800; depth++) {
+        for (let depth = 0; depth < 1000; depth++) {
 
             const rayX =
                 player.x + Math.cos(rayAngle) * depth;
@@ -245,10 +257,12 @@ function castRays() {
             if (wallAt(rayX, rayY)) {
 
                 const wallHeight =
-                    40000 / (depth + 1);
+                    50000 / (depth + 1);
+
+                const shade = 255 - depth / 5;
 
                 ctx.fillStyle =
-                    `rgb(${255-depth/4},0,0)`;
+                    `rgb(${shade},0,0)`;
 
                 ctx.fillRect(
                     x,
@@ -263,6 +277,90 @@ function castRays() {
     }
 }
 
+function drawFrames() {
+
+    frames.forEach(frame => {
+
+        const dx = frame.x - player.x;
+        const dy = frame.y - player.y;
+
+        const distance = Math.hypot(dx, dy);
+
+        const angle =
+            Math.atan2(dy, dx) - player.angle;
+
+        if (Math.abs(angle) < 0.5) {
+
+            const size = 1500 / distance;
+
+            const screenX =
+                canvas.width/2 +
+                Math.tan(angle) * 500;
+
+            // frame
+            ctx.fillStyle = "#5c3b16";
+
+            ctx.fillRect(
+                screenX - size/2,
+                canvas.height/2 - size/2,
+                size,
+                size
+            );
+
+            // face
+            ctx.fillStyle = "white";
+
+            ctx.beginPath();
+            ctx.arc(
+                screenX,
+                canvas.height/2,
+                size/3,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+            // eyes
+            ctx.fillStyle = "black";
+
+            ctx.beginPath();
+            ctx.arc(
+                screenX - size/8,
+                canvas.height/2 - size/10,
+                size/18,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.arc(
+                screenX + size/8,
+                canvas.height/2 - size/10,
+                size/18,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fill();
+
+            // mouth
+            ctx.strokeStyle = "black";
+
+            ctx.beginPath();
+
+            ctx.arc(
+                screenX,
+                canvas.height/2 + size/12,
+                size/10,
+                0,
+                Math.PI
+            );
+
+            ctx.stroke();
+        }
+    });
+}
+
 function drawMonster() {
 
     const dx = monster.x - player.x;
@@ -275,7 +373,7 @@ function drawMonster() {
 
     if (Math.abs(angleToMonster) < 0.5) {
 
-        const size = 2000 / distance;
+        const size = 2500 / distance;
 
         const screenX =
             canvas.width/2 +
@@ -284,6 +382,7 @@ function drawMonster() {
         ctx.fillStyle = "white";
 
         ctx.beginPath();
+
         ctx.arc(
             screenX,
             canvas.height/2,
@@ -297,19 +396,38 @@ function drawMonster() {
         ctx.fillStyle = "black";
 
         ctx.beginPath();
-        ctx.arc(screenX - size/3,
-            canvas.height/2 - size/5,
-            size/8,
-            0,
-            Math.PI*2);
 
-        ctx.arc(screenX + size/3,
+        ctx.arc(
+            screenX - size/3,
             canvas.height/2 - size/5,
             size/8,
             0,
-            Math.PI*2);
+            Math.PI*2
+        );
+
+        ctx.arc(
+            screenX + size/3,
+            canvas.height/2 - size/5,
+            size/8,
+            0,
+            Math.PI*2
+        );
 
         ctx.fill();
+
+        ctx.strokeStyle = "black";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screenX,
+            canvas.height/2 + size/5,
+            size/4,
+            0,
+            Math.PI
+        );
+
+        ctx.stroke();
     }
 }
 
@@ -334,6 +452,9 @@ function draw() {
     if (started) {
 
         castRays();
+
+        drawFrames();
+
         drawMonster();
 
         // crosshair
