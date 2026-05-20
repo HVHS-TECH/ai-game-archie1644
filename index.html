@@ -3,33 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Space Invaders</title>
+<title>Escape Tung Tung Tung Sahur</title>
 
 <style>
 body {
     margin: 0;
     overflow: hidden;
     background: black;
-    font-family: Arial, sans-serif;
+    font-family: Arial;
 }
 
 canvas {
     display: block;
-    margin: auto;
-    background: linear-gradient(#000010, #000);
 }
 
 #menu {
     position: absolute;
     width: 100%;
-    top: 40%;
+    top: 30%;
     text-align: center;
     color: white;
 }
 
 #menu h1 {
     font-size: 60px;
-    margin-bottom: 10px;
 }
 
 #menu p {
@@ -41,24 +38,35 @@ button {
     font-size: 24px;
     border: none;
     border-radius: 10px;
-    background: lime;
+    background: red;
+    color: white;
     cursor: pointer;
-    margin-top: 20px;
 }
 
-button:hover {
-    background: rgb(0, 200, 0);
+#message {
+    position: absolute;
+    width: 100%;
+    top: 40%;
+    text-align: center;
+    color: white;
+    font-size: 60px;
+    display: none;
 }
 </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1>SPACE INVADERS</h1>
-    <p>A and D to Move</p>
-    <p>Click to Shoot</p>
-    <button onclick="startGame()">START GAME</button>
+    <h1>ESCAPE TUNG TUNG TUNG SAHUR</h1>
+
+    <p>WASD to move</p>
+    <p>Hold Right Click to look around</p>
+    <p>Find the green exit before he catches you</p>
+
+    <button onclick="startGame()">START</button>
 </div>
+
+<div id="message"></div>
 
 <canvas id="game"></canvas>
 
@@ -66,266 +74,315 @@ button:hover {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = 900;
-canvas.height = 600;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let gameStarted = false;
+let started = false;
+let gameOver = false;
 
 let keys = {};
-let bullets = [];
-let enemies = [];
-let stars = [];
+let looking = false;
 
-let score = 0;
-let level = 1;
-let gameOver = false;
-let enemySpeed = 1.2;
-let direction = 1;
+const maze = [
+"111111111111",
+"100000000001",
+"101111111101",
+"100000100001",
+"111110101101",
+"100010000001",
+"101011111101",
+"101000000001",
+"101111111101",
+"1000000000E1",
+"111111111111"
+];
+
+const tileSize = 64;
 
 const player = {
-    x: canvas.width / 2 - 30,
-    y: canvas.height - 80,
-    width: 60,
-    height: 40,
-    speed: 6
+    x: 100,
+    y: 100,
+    angle: 0
+};
+
+const monster = {
+    x: 500,
+    y: 500,
+    speed: 1.2
 };
 
 document.addEventListener("keydown", e => {
-
-    keys[e.key] = true;
-
-    if (gameOver && e.key.toLowerCase() === "r") {
-        restartGame();
-    }
+    keys[e.key.toLowerCase()] = true;
 });
 
 document.addEventListener("keyup", e => {
-    keys[e.key] = false;
+    keys[e.key.toLowerCase()] = false;
 });
 
-document.addEventListener("mousedown", () => {
+document.addEventListener("contextmenu", e => {
+    e.preventDefault();
+});
 
-    if (!gameOver && gameStarted) {
+document.addEventListener("mousedown", e => {
 
-        bullets.push({
-            x: player.x + player.width / 2 - 2,
-            y: player.y,
-            width: 4,
-            height: 12,
-            speed: 8
-        });
+    if (e.button === 2) {
+        looking = true;
     }
 });
 
-for (let i = 0; i < 100; i++) {
+document.addEventListener("mouseup", e => {
 
-    stars.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        size: Math.random() * 2
-    });
-}
+    if (e.button === 2) {
+        looking = false;
+    }
+});
+
+document.addEventListener("mousemove", e => {
+
+    if (looking && started && !gameOver) {
+        player.angle += e.movementX * 0.003;
+    }
+});
 
 function startGame() {
 
-    gameStarted = true;
+    started = true;
 
     document.getElementById("menu").style.display = "none";
 }
 
-function createEnemies() {
+function wallAt(x, y) {
 
-    enemies = [];
+    const mapX = Math.floor(x / tileSize);
+    const mapY = Math.floor(y / tileSize);
 
-    const rows = Math.min(2 + level, 5);
-
-    for (let row = 0; row < rows; row++) {
-
-        for (let col = 0; col < 8; col++) {
-
-            enemies.push({
-                x: 120 + col * 80,
-                y: 50 + row * 60,
-                width: 40,
-                height: 40,
-                alive: true
-            });
-        }
+    if (
+        mapY < 0 ||
+        mapY >= maze.length ||
+        mapX < 0 ||
+        mapX >= maze[0].length
+    ) {
+        return true;
     }
-}
 
-createEnemies();
+    return maze[mapY][mapX] === "1";
+}
 
 function update() {
 
-    if (!gameStarted || gameOver) return;
+    if (!started || gameOver) return;
 
-    if ((keys["a"] || keys["A"]) && player.x > 0) {
-        player.x -= player.speed;
+    let moveX = 0;
+    let moveY = 0;
+
+    const speed = 2.5;
+
+    if (keys["w"]) {
+        moveX += Math.cos(player.angle) * speed;
+        moveY += Math.sin(player.angle) * speed;
     }
 
-    if ((keys["d"] || keys["D"]) && player.x + player.width < canvas.width) {
-        player.x += player.speed;
+    if (keys["s"]) {
+        moveX -= Math.cos(player.angle) * speed;
+        moveY -= Math.sin(player.angle) * speed;
     }
 
-    bullets.forEach((bullet, i) => {
-
-        bullet.y -= bullet.speed;
-
-        if (bullet.y < 0) {
-            bullets.splice(i, 1);
-        }
-    });
-
-    let hitEdge = false;
-
-    enemies.forEach(enemy => {
-
-        if (!enemy.alive) return;
-
-        enemy.x += enemySpeed * direction;
-
-        if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
-            hitEdge = true;
-        }
-
-        if (enemy.y + enemy.height >= player.y) {
-            gameOver = true;
-        }
-    });
-
-    if (hitEdge) {
-
-        direction *= -1;
-
-        enemies.forEach(enemy => {
-            enemy.y += 20;
-        });
+    if (keys["a"]) {
+        moveX += Math.cos(player.angle - Math.PI/2) * speed;
+        moveY += Math.sin(player.angle - Math.PI/2) * speed;
     }
 
-    bullets.forEach((bullet, bi) => {
+    if (keys["d"]) {
+        moveX += Math.cos(player.angle + Math.PI/2) * speed;
+        moveY += Math.sin(player.angle + Math.PI/2) * speed;
+    }
 
-        enemies.forEach(enemy => {
+    if (!wallAt(player.x + moveX, player.y)) {
+        player.x += moveX;
+    }
 
-            if (
-                enemy.alive &&
-                bullet.x < enemy.x + enemy.width &&
-                bullet.x + bullet.width > enemy.x &&
-                bullet.y < enemy.y + enemy.height &&
-                bullet.y + bullet.height > enemy.y
-            ) {
+    if (!wallAt(player.x, player.y + moveY)) {
+        player.y += moveY;
+    }
 
-                enemy.alive = false;
-                score += 10;
+    // monster AI
+    const dx = player.x - monster.x;
+    const dy = player.y - monster.y;
 
-                bullets.splice(bi, 1);
+    const dist = Math.hypot(dx, dy);
+
+    monster.x += (dx / dist) * monster.speed;
+    monster.y += (dy / dist) * monster.speed;
+
+    if (dist < 25) {
+        loseGame();
+    }
+
+    // exit
+    const mapX = Math.floor(player.x / tileSize);
+    const mapY = Math.floor(player.y / tileSize);
+
+    if (maze[mapY][mapX] === "E") {
+        winGame();
+    }
+}
+
+function castRays() {
+
+    for (let x = 0; x < canvas.width; x++) {
+
+        const rayAngle =
+            player.angle - 0.5 + (x / canvas.width);
+
+        for (let depth = 0; depth < 800; depth++) {
+
+            const rayX =
+                player.x + Math.cos(rayAngle) * depth;
+
+            const rayY =
+                player.y + Math.sin(rayAngle) * depth;
+
+            if (wallAt(rayX, rayY)) {
+
+                const wallHeight =
+                    40000 / (depth + 1);
+
+                ctx.fillStyle =
+                    `rgb(${255-depth/4},0,0)`;
+
+                ctx.fillRect(
+                    x,
+                    canvas.height/2 - wallHeight/2,
+                    1,
+                    wallHeight
+                );
+
+                break;
             }
-        });
-    });
-
-    const aliveEnemies = enemies.filter(e => e.alive);
-
-    if (aliveEnemies.length === 0) {
-
-        level++;
-        enemySpeed += 0.4;
-
-        createEnemies();
+        }
     }
 }
 
-function drawPlayer() {
+function drawMonster() {
 
-    ctx.fillStyle = "lime";
+    const dx = monster.x - player.x;
+    const dy = monster.y - player.y;
 
-    ctx.beginPath();
-    ctx.moveTo(player.x + player.width / 2, player.y);
-    ctx.lineTo(player.x, player.y + player.height);
-    ctx.lineTo(player.x + player.width, player.y + player.height);
-    ctx.closePath();
-    ctx.fill();
+    const distance = Math.hypot(dx, dy);
 
-    ctx.fillStyle = "cyan";
-    ctx.fillRect(player.x + 22, player.y + 10, 16, 10);
-}
+    const angleToMonster =
+        Math.atan2(dy, dx) - player.angle;
 
-function drawEnemy(enemy) {
+    if (Math.abs(angleToMonster) < 0.5) {
 
-    ctx.fillStyle = "red";
+        const size = 2000 / distance;
 
-    ctx.fillRect(enemy.x + 5, enemy.y + 10, 30, 20);
+        const screenX =
+            canvas.width/2 +
+            Math.tan(angleToMonster) * 500;
 
-    ctx.fillRect(enemy.x + 10, enemy.y, 20, 10);
+        ctx.fillStyle = "white";
 
-    ctx.fillRect(enemy.x + 5, enemy.y + 30, 5, 8);
-    ctx.fillRect(enemy.x + 30, enemy.y + 30, 5, 8);
+        ctx.beginPath();
+        ctx.arc(
+            screenX,
+            canvas.height/2,
+            size,
+            0,
+            Math.PI * 2
+        );
 
-    ctx.fillStyle = "white";
+        ctx.fill();
 
-    ctx.fillRect(enemy.x + 10, enemy.y + 15, 4, 4);
-    ctx.fillRect(enemy.x + 26, enemy.y + 15, 4, 4);
+        ctx.fillStyle = "black";
+
+        ctx.beginPath();
+        ctx.arc(screenX - size/3,
+            canvas.height/2 - size/5,
+            size/8,
+            0,
+            Math.PI*2);
+
+        ctx.arc(screenX + size/3,
+            canvas.height/2 - size/5,
+            size/8,
+            0,
+            Math.PI*2);
+
+        ctx.fill();
+    }
 }
 
 function draw() {
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    stars.forEach(star => {
+    // sky
+    ctx.fillStyle = "#111";
+    ctx.fillRect(0, 0, canvas.width, canvas.height/2);
 
-        ctx.fillStyle = "white";
-        ctx.fillRect(star.x, star.y, star.size, star.size);
-    });
+    // floor
+    ctx.fillStyle = "#222";
+    ctx.fillRect(
+        0,
+        canvas.height/2,
+        canvas.width,
+        canvas.height/2
+    );
 
-    if (gameStarted) {
+    if (started) {
 
-        drawPlayer();
+        castRays();
+        drawMonster();
 
-        bullets.forEach(bullet => {
+        // crosshair
+        ctx.strokeStyle = "white";
 
-            ctx.fillStyle = "yellow";
-            ctx.fillRect(
-                bullet.x,
-                bullet.y,
-                bullet.width,
-                bullet.height
-            );
-        });
+        ctx.beginPath();
 
-        enemies.forEach(enemy => {
+        ctx.moveTo(
+            canvas.width/2 - 10,
+            canvas.height/2
+        );
 
-            if (enemy.alive) {
-                drawEnemy(enemy);
-            }
-        });
+        ctx.lineTo(
+            canvas.width/2 + 10,
+            canvas.height/2
+        );
 
-        ctx.fillStyle = "white";
-        ctx.font = "28px Arial";
+        ctx.moveTo(
+            canvas.width/2,
+            canvas.height/2 - 10
+        );
 
-        ctx.fillText("Score: " + score, 20, 40);
-        ctx.fillText("Level: " + level, 20, 80);
-    }
+        ctx.lineTo(
+            canvas.width/2,
+            canvas.height/2 + 10
+        );
 
-    if (gameOver) {
-
-        ctx.fillStyle = "red";
-        ctx.font = "60px Arial";
-        ctx.fillText("GAME OVER", 240, 280);
-
-        ctx.fillStyle = "white";
-        ctx.font = "30px Arial";
-        ctx.fillText("Press R to Restart", 300, 340);
+        ctx.stroke();
     }
 }
 
-function restartGame() {
+function loseGame() {
 
-    score = 0;
-    level = 1;
-    enemySpeed = 1.2;
-    bullets = [];
-    gameOver = false;
+    gameOver = true;
 
-    createEnemies();
+    const msg = document.getElementById("message");
+
+    msg.style.display = "block";
+    msg.innerText = "TUNG TUNG TUNG SAHUR GOT YOU";
+}
+
+function winGame() {
+
+    gameOver = true;
+
+    const msg = document.getElementById("message");
+
+    msg.style.display = "block";
+    msg.innerText = "YOU ESCAPED";
 }
 
 function gameLoop() {
