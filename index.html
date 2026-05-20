@@ -20,13 +20,15 @@ canvas {
 #menu {
     position: absolute;
     width: 100%;
-    top: 28%;
+    top: 22%;
     text-align: center;
     color: white;
+    z-index: 10;
 }
 
 #menu h1 {
     font-size: 60px;
+    margin-bottom: 10px;
 }
 
 #menu p {
@@ -41,6 +43,7 @@ button {
     background: red;
     color: white;
     cursor: pointer;
+    margin-top: 20px;
 }
 
 #message {
@@ -51,6 +54,7 @@ button {
     color: white;
     font-size: 60px;
     display: none;
+    z-index: 20;
 }
 </style>
 </head>
@@ -60,10 +64,10 @@ button {
     <h1>ESCAPE TUNG TUNG TUNG SAHUR</h1>
 
     <p>WASD to move</p>
-    <p>Hold Right Click to look around</p>
-    <p>Escape the maze before he catches you</p>
+    <p>Move mouse to look around</p>
+    <p>Escape the maze before Tung catches you</p>
 
-    <button onclick="startGame()">START</button>
+    <button onclick="startGame()">START GAME</button>
 </div>
 
 <div id="message"></div>
@@ -81,47 +85,58 @@ let started = false;
 let gameOver = false;
 
 let keys = {};
-let looking = false;
-
-const maze = [
-"111111111111111111",
-"1000000000000000E1",
-"101111111111111101",
-"101000000000001101",
-"101011111111101101",
-"101010000001101101",
-"101010111101101101",
-"101010100001101101",
-"101010101111101101",
-"101000101000001101",
-"101111101011111101",
-"100000001000000001",
-"101111111111111101",
-"100000000000000001",
-"111111111111111111"
-];
 
 const tileSize = 64;
 
+const maze = [
+"111111111111111111111111111",
+"1000000000000010000000000E1",
+"101111111111101011111111101",
+"101000000001101010000001101",
+"101011111101101010111101101",
+"101010001101001010100001101",
+"101010101111111010101111101",
+"101010100000001010100000101",
+"101010111111101010111110101",
+"101010100000101010100010101",
+"101110101110101010101010101",
+"100000101000101000001010101",
+"101111101011111111111010101",
+"101000001000000000001010101",
+"101011111111111111101010101",
+"101010000000000000101010101",
+"101010111111111110101010101",
+"101010100000000010001010101",
+"101010101111111011111010101",
+"101000101000001000000010101",
+"101111101011101111111110101",
+"100000001010100000000000101",
+"101111111010111111111110101",
+"100000000000000000000000001",
+"111111111111111111111111111"
+];
+
 const player = {
     x: 96,
-    y: 832,
-    angle: 0
+    y: 96,
+    angle: 0,
+    speed: 2.8
 };
 
-const monster = {
-    x: 850,
-    y: 120,
-    speed: 1.4
+const tung = {
+    x: 1500,
+    y: 1400,
+    speed: 1.6
 };
 
-const frames = [
-    {x: 5 * tileSize, y: 1.5 * tileSize},
-    {x: 9 * tileSize, y: 3.5 * tileSize},
-    {x: 13 * tileSize, y: 5.5 * tileSize},
-    {x: 3 * tileSize, y: 9.5 * tileSize},
-    {x: 10 * tileSize, y: 11.5 * tileSize}
-];
+function startGame() {
+
+    started = true;
+
+    document.getElementById("menu").style.display = "none";
+
+    canvas.requestPointerLock();
+}
 
 document.addEventListener("keydown", e => {
     keys[e.key.toLowerCase()] = true;
@@ -131,37 +146,16 @@ document.addEventListener("keyup", e => {
     keys[e.key.toLowerCase()] = false;
 });
 
-document.addEventListener("contextmenu", e => {
-    e.preventDefault();
-});
-
-document.addEventListener("mousedown", e => {
-
-    if (e.button === 2) {
-        looking = true;
-    }
-});
-
-document.addEventListener("mouseup", e => {
-
-    if (e.button === 2) {
-        looking = false;
-    }
-});
-
 document.addEventListener("mousemove", e => {
 
-    if (looking && started && !gameOver) {
+    if (
+        document.pointerLockElement === canvas &&
+        started &&
+        !gameOver
+    ) {
         player.angle += e.movementX * 0.003;
     }
 });
-
-function startGame() {
-
-    started = true;
-
-    document.getElementById("menu").style.display = "none";
-}
 
 function wallAt(x, y) {
 
@@ -187,28 +181,27 @@ function update() {
     let moveX = 0;
     let moveY = 0;
 
-    const speed = 2.5;
-
     if (keys["w"]) {
-        moveX += Math.cos(player.angle) * speed;
-        moveY += Math.sin(player.angle) * speed;
+        moveX += Math.cos(player.angle) * player.speed;
+        moveY += Math.sin(player.angle) * player.speed;
     }
 
     if (keys["s"]) {
-        moveX -= Math.cos(player.angle) * speed;
-        moveY -= Math.sin(player.angle) * speed;
+        moveX -= Math.cos(player.angle) * player.speed;
+        moveY -= Math.sin(player.angle) * player.speed;
     }
 
     if (keys["a"]) {
-        moveX += Math.cos(player.angle - Math.PI/2) * speed;
-        moveY += Math.sin(player.angle - Math.PI/2) * speed;
+        moveX += Math.cos(player.angle - Math.PI/2) * player.speed;
+        moveY += Math.sin(player.angle - Math.PI/2) * player.speed;
     }
 
     if (keys["d"]) {
-        moveX += Math.cos(player.angle + Math.PI/2) * speed;
-        moveY += Math.sin(player.angle + Math.PI/2) * speed;
+        moveX += Math.cos(player.angle + Math.PI/2) * player.speed;
+        moveY += Math.sin(player.angle + Math.PI/2) * player.speed;
     }
 
+    // player collision
     if (!wallAt(player.x + moveX, player.y)) {
         player.x += moveX;
     }
@@ -217,20 +210,28 @@ function update() {
         player.y += moveY;
     }
 
-    // monster AI
-    const dx = player.x - monster.x;
-    const dy = player.y - monster.y;
+    // tung movement
+    const dx = player.x - tung.x;
+    const dy = player.y - tung.y;
 
     const dist = Math.hypot(dx, dy);
 
-    monster.x += (dx / dist) * monster.speed;
-    monster.y += (dy / dist) * monster.speed;
+    const mx = (dx / dist) * tung.speed;
+    const my = (dy / dist) * tung.speed;
 
-    if (dist < 25) {
+    if (!wallAt(tung.x + mx, tung.y)) {
+        tung.x += mx;
+    }
+
+    if (!wallAt(tung.x, tung.y + my)) {
+        tung.y += my;
+    }
+
+    if (dist < 40) {
         loseGame();
     }
 
-    // exit
+    // exit check
     const mapX = Math.floor(player.x / tileSize);
     const mapY = Math.floor(player.y / tileSize);
 
@@ -244,9 +245,10 @@ function castRays() {
     for (let x = 0; x < canvas.width; x++) {
 
         const rayAngle =
-            player.angle - 0.5 + (x / canvas.width);
+            player.angle - 0.6 +
+            (x / canvas.width) * 1.2;
 
-        for (let depth = 0; depth < 1000; depth++) {
+        for (let depth = 0; depth < 1200; depth++) {
 
             const rayX =
                 player.x + Math.cos(rayAngle) * depth;
@@ -257,9 +259,10 @@ function castRays() {
             if (wallAt(rayX, rayY)) {
 
                 const wallHeight =
-                    50000 / (depth + 1);
+                    70000 / (depth + 1);
 
-                const shade = 255 - depth / 5;
+                const shade =
+                    Math.max(40, 255 - depth / 4);
 
                 ctx.fillStyle =
                     `rgb(${shade},0,0)`;
@@ -277,116 +280,94 @@ function castRays() {
     }
 }
 
-function drawFrames() {
+function drawTung() {
 
-    frames.forEach(frame => {
-
-        const dx = frame.x - player.x;
-        const dy = frame.y - player.y;
-
-        const distance = Math.hypot(dx, dy);
-
-        const angle =
-            Math.atan2(dy, dx) - player.angle;
-
-        if (Math.abs(angle) < 0.5) {
-
-            const size = 1500 / distance;
-
-            const screenX =
-                canvas.width/2 +
-                Math.tan(angle) * 500;
-
-            // frame
-            ctx.fillStyle = "#5c3b16";
-
-            ctx.fillRect(
-                screenX - size/2,
-                canvas.height/2 - size/2,
-                size,
-                size
-            );
-
-            // face
-            ctx.fillStyle = "white";
-
-            ctx.beginPath();
-            ctx.arc(
-                screenX,
-                canvas.height/2,
-                size/3,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.fill();
-
-            // eyes
-            ctx.fillStyle = "black";
-
-            ctx.beginPath();
-            ctx.arc(
-                screenX - size/8,
-                canvas.height/2 - size/10,
-                size/18,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.arc(
-                screenX + size/8,
-                canvas.height/2 - size/10,
-                size/18,
-                0,
-                Math.PI * 2
-            );
-
-            ctx.fill();
-
-            // mouth
-            ctx.strokeStyle = "black";
-
-            ctx.beginPath();
-
-            ctx.arc(
-                screenX,
-                canvas.height/2 + size/12,
-                size/10,
-                0,
-                Math.PI
-            );
-
-            ctx.stroke();
-        }
-    });
-}
-
-function drawMonster() {
-
-    const dx = monster.x - player.x;
-    const dy = monster.y - player.y;
+    const dx = tung.x - player.x;
+    const dy = tung.y - player.y;
 
     const distance = Math.hypot(dx, dy);
 
-    const angleToMonster =
+    const angle =
         Math.atan2(dy, dx) - player.angle;
 
-    if (Math.abs(angleToMonster) < 0.5) {
+    if (Math.abs(angle) < 0.6) {
 
-        const size = 2500 / distance;
+        const size = 5000 / distance;
 
         const screenX =
             canvas.width/2 +
-            Math.tan(angleToMonster) * 500;
+            Math.tan(angle) * 700;
 
-        ctx.fillStyle = "white";
+        // legs
+        ctx.strokeStyle = "#7a4a21";
+        ctx.lineWidth = size/8;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            screenX - size/6,
+            canvas.height/2 + size/2
+        );
+
+        ctx.lineTo(
+            screenX - size/4,
+            canvas.height/2 + size
+        );
+
+        ctx.moveTo(
+            screenX + size/6,
+            canvas.height/2 + size/2
+        );
+
+        ctx.lineTo(
+            screenX + size/4,
+            canvas.height/2 + size
+        );
+
+        ctx.stroke();
+
+        // body
+        ctx.fillStyle = "#9b5d2e";
+
+        ctx.fillRect(
+            screenX - size/5,
+            canvas.height/2 - size/4,
+            size/2.5,
+            size
+        );
+
+        // head
+        ctx.fillStyle = "#d18a4f";
 
         ctx.beginPath();
 
         ctx.arc(
             screenX,
-            canvas.height/2,
-            size,
+            canvas.height/2 - size/2,
+            size/2.8,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+
+        // eyes
+        ctx.fillStyle = "white";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            screenX - size/7,
+            canvas.height/2 - size/2,
+            size/11,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.arc(
+            screenX + size/7,
+            canvas.height/2 - size/2,
+            size/11,
             0,
             Math.PI * 2
         );
@@ -398,31 +379,33 @@ function drawMonster() {
         ctx.beginPath();
 
         ctx.arc(
-            screenX - size/3,
-            canvas.height/2 - size/5,
-            size/8,
+            screenX - size/7,
+            canvas.height/2 - size/2,
+            size/25,
             0,
-            Math.PI*2
+            Math.PI * 2
         );
 
         ctx.arc(
-            screenX + size/3,
-            canvas.height/2 - size/5,
-            size/8,
+            screenX + size/7,
+            canvas.height/2 - size/2,
+            size/25,
             0,
-            Math.PI*2
+            Math.PI * 2
         );
 
         ctx.fill();
 
+        // mouth
         ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
 
         ctx.beginPath();
 
         ctx.arc(
             screenX,
-            canvas.height/2 + size/5,
-            size/4,
+            canvas.height/2 - size/2 + size/8,
+            size/10,
             0,
             Math.PI
         );
@@ -431,14 +414,124 @@ function drawMonster() {
     }
 }
 
-function draw() {
+function drawFrames() {
 
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    for (let y = 0; y < maze.length; y++) {
+
+        for (let x = 0; x < maze[y].length; x++) {
+
+            if (
+                maze[y][x] === "1" &&
+                (x + y) % 8 === 0
+            ) {
+
+                const fx = x * tileSize + 32;
+                const fy = y * tileSize + 32;
+
+                const dx = fx - player.x;
+                const dy = fy - player.y;
+
+                const distance = Math.hypot(dx, dy);
+
+                const angle =
+                    Math.atan2(dy, dx) - player.angle;
+
+                if (Math.abs(angle) < 0.5) {
+
+                    const size = 1000 / distance;
+
+                    const screenX =
+                        canvas.width/2 +
+                        Math.tan(angle) * 600;
+
+                    // frame
+                    ctx.fillStyle = "#5c3b16";
+
+                    ctx.fillRect(
+                        screenX - size/2,
+                        canvas.height/2 - size/2,
+                        size,
+                        size
+                    );
+
+                    // face
+                    ctx.fillStyle = "#d18a4f";
+
+                    ctx.beginPath();
+
+                    ctx.arc(
+                        screenX,
+                        canvas.height/2,
+                        size/3,
+                        0,
+                        Math.PI * 2
+                    );
+
+                    ctx.fill();
+                }
+            }
+        }
+    }
+}
+
+function drawMiniMap() {
+
+    const scale = 6;
+
+    for (let y = 0; y < maze.length; y++) {
+
+        for (let x = 0; x < maze[y].length; x++) {
+
+            if (maze[y][x] === "1") {
+                ctx.fillStyle = "white";
+            }
+            else if (maze[y][x] === "E") {
+                ctx.fillStyle = "lime";
+            }
+            else {
+                ctx.fillStyle = "#222";
+            }
+
+            ctx.fillRect(
+                x * scale + 15,
+                y * scale + 15,
+                scale,
+                scale
+            );
+        }
+    }
+
+    // player
+    ctx.fillStyle = "red";
+
+    ctx.fillRect(
+        (player.x / tileSize) * scale + 13,
+        (player.y / tileSize) * scale + 13,
+        5,
+        5
+    );
+
+    // tung
+    ctx.fillStyle = "orange";
+
+    ctx.fillRect(
+        (tung.x / tileSize) * scale + 13,
+        (tung.y / tileSize) * scale + 13,
+        5,
+        5
+    );
+}
+
+function draw() {
 
     // sky
     ctx.fillStyle = "#111";
-    ctx.fillRect(0, 0, canvas.width, canvas.height/2);
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height/2
+    );
 
     // floor
     ctx.fillStyle = "#222";
@@ -455,7 +548,9 @@ function draw() {
 
         drawFrames();
 
-        drawMonster();
+        drawTung();
+
+        drawMiniMap();
 
         // crosshair
         ctx.strokeStyle = "white";
@@ -490,20 +585,28 @@ function loseGame() {
 
     gameOver = true;
 
+    document.exitPointerLock();
+
     const msg = document.getElementById("message");
 
     msg.style.display = "block";
-    msg.innerText = "TUNG TUNG TUNG SAHUR GOT YOU";
+
+    msg.innerText =
+        "TUNG TUNG TUNG SAHUR GOT YOU";
 }
 
 function winGame() {
 
     gameOver = true;
 
+    document.exitPointerLock();
+
     const msg = document.getElementById("message");
 
     msg.style.display = "block";
-    msg.innerText = "YOU ESCAPED";
+
+    msg.innerText =
+        "YOU ESCAPED";
 }
 
 function gameLoop() {
